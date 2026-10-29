@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intelligent Email Assistant using Ollama - Experiment 3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Ambient Burgundy Background Glows -->
+  <div class="glow-orb glow-top-left"></div>
+  <div class="glow-orb glow-bottom-right"></div>
+  <div class="glow-orb glow-center"></div>
+
+  <div class="app-container">
+    <!-- Header Banner -->
+    <header class="glass-panel header-panel">
+      <div class="header-left">
+        <div class="lab-badge">
+          <span class="pulse-dot"></span>
+          <span>COLLEGE LAB EXPERIMENT 3</span>
+        </div>
+        <h1 class="app-title">Intelligent Email Assistant</h1>
+        <p class="app-subtitle">Powered by Local <span class="highlight-pill">Ollama llama3.2</span> &bull; <span class="highlight-pill">Sentence Transformers</span> &bull; <span class="highlight-pill">Pandas CSV</span></p>
+      </div>
+      <div class="header-right">
+        <div class="status-chip" id="ollama-status-chip">
+          <span class="status-indicator"></span>
+          <span id="ollama-status-text">Checking Ollama...</span>
+        </div>
+        <button id="view-archive-btn" class="glass-btn btn-secondary" onclick="openArchiveModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+          Saved Archive (<span id="saved-count-badge">0</span>)
+        </button>
+        <button id="view-lab-info-btn" class="glass-btn btn-secondary" onclick="openLabInfoModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          Lab Manual
+        </button>
+      </div>
+    </header>
+
+    <!-- Metrics Row -->
+    <div class="metrics-grid">
+      <div class="glass-panel metric-card">
+        <div class="metric-label">Historical Knowledge Base</div>
+        <div class="metric-value" id="metric-kb-count">12 Emails</div>
+        <div class="metric-caption">Pre-computed sentence embeddings</div>
+      </div>
+      <div class="glass-panel metric-card">
+        <div class="metric-label">Target LLM Model</div>
+        <div class="metric-value font-mono">llama3.2</div>
+        <div class="metric-caption">Zero Cloud APIs &bull; 100% Local Inference</div>
+      </div>
+      <div class="glass-panel metric-card">
+        <div class="metric-label">Retrieval Engine</div>
+        <div class="metric-value font-mono text-sm" id="metric-retrieval-engine">all-MiniLM-L6-v2</div>
+        <div class="metric-caption">Cosine Similarity Ranking</div>
+      </div>
+      <div class="glass-panel metric-card">
+        <div class="metric-label">Active Storage</div>
+        <div class="metric-value">CSV + JSON</div>
+        <div class="metric-caption">Local file persistence in /data</div>
+      </div>
+    </div>
+
+    <!-- Main Workspace Grid -->
+    <div class="main-layout">
+      <!-- Left Column: Input Form & Historical Matches -->
+      <div class="left-column">
+        <!-- Input Glass Card -->
+        <section class="glass-panel action-card">
+          <div class="card-header">
+            <div class="header-icon-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <h2>Incoming Customer Email</h2>
+            </div>
+            <div class="sample-loader">
+              <label for="sample-select">Quick Sample:</label>
+              <select id="sample-select" onchange="loadSampleEmail(this.value)" class="glass-select">
+                <option value="">-- Load Scenario --</option>
+                <option value="double_charge">Double Billing ($49 Charge)</option>
+                <option value="api_401">API 401 Webhook Error</option>
+                <option value="vat_invoice">VAT Invoice Request</option>
+                <option value="password_reset">Password Reset Lockout</option>
+                <option value="urgent_csv">Urgent Corrupted CSV Export</option>
+                <option value="cancel_sub">Cancel Annual Renewal</option>
+                <option value="student_discount">Student Discount Verification</option>
+              </select>
+            </div>
+          </div>
+
+          <form id="email-form" onsubmit="event.preventDefault(); processEmailPipeline();">
+            <div class="form-row two-cols">
+              <div class="form-group">
+                <label for="customer-name">Customer Name</label>
+                <input type="text" id="customer-name" class="glass-input" placeholder="e.g. Sarah Jenkins" required>
+              </div>
+              <div class="form-group">
+                <label for="customer-email">Customer Email</label>
+                <input type="email" id="customer-email" class="glass-input" placeholder="e.g. sarah.j@example.com" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email-subject">Subject Line</label>
+              <input type="text" id="email-subject" class="glass-input" placeholder="e.g. Double charged for monthly subscription" required>
+            </div>
+
+            <div class="form-group">
+              <label for="email-body">Customer Email Message</label>
+              <textarea id="email-body" rows="6" class="glass-textarea" placeholder="Paste the customer's email message here..." required></textarea>
+            </div>
+
+            <div class="button-group">
+              <button type="submit" id="submit-btn" class="glass-btn btn-primary">
+                <span class="btn-sparkle">&#10022;</span>
+                <span id="btn-text">Execute Assistant Pipeline</span>
+              </button>
+              <button type="button" class="glass-btn btn-secondary" onclick="clearForm()">
+                Clear
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Historical Retrieved Context Card (Sentence Transformers) -->
+        <section class="glass-panel" id="retrieval-section">
+          <div class="card-header">
+            <div class="header-icon-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <h2>Historical Context (Sentence Transformers)</h2>
+            </div>
+            <span class="badge badge-wine">Cosine Similarity</span>
+          </div>
+          <p class="section-desc">Retrieved from <code>historical_emails.csv</code> to ground Ollama's response in company precedent.</p>
+          <div id="retrieved-emails-container" class="retrieved-list">
+            <div class="empty-state">Submit an email above to retrieve semantically similar historical resolutions.</div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Results, Ollama Reply, Tones & Summary -->
+      <div class="right-column">
+        <!-- Intent & Classification Banner -->
+        <section class="glass-panel" id="intent-section">
+          <div class="card-header">
+            <div class="header-icon-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"/></svg>
+              <h2>Detected Customer Intent</h2>
+            </div>
+            <div id="intent-badge-container">
+              <span class="badge badge-waiting">Awaiting Analysis</span>
+            </div>
+          </div>
+          <div id="intent-details" class="intent-details-box">
+            <div class="intent-stat-row">
+              <span class="intent-label">Confidence:</span>
+              <div class="confidence-bar-wrap">
+                <div id="confidence-bar" class="confidence-bar" style="width: 0%"></div>
+              </div>
+              <span id="confidence-pct">--%</span>
+            </div>
+            <div class="intent-reasoning-text" id="intent-reasoning">
+              Enter an email and run the pipeline to detect intent via llama3.2 zero-shot classification.
+            </div>
+          </div>
+        </section>
+
+        <!-- AI Reply Generation Card -->
+        <section class="glass-panel" id="reply-section">
+          <div class="card-header">
+            <div class="header-icon-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <h2>Generated AI Reply (Ollama llama3.2)</h2>
+            </div>
+            <div class="header-actions">
+              <span class="badge badge-model" id="reply-model-tag">llama3.2</span>
+              <button class="icon-btn" onclick="copyReplyText()" title="Copy to clipboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span id="copy-label">Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tone Selector Toolbar -->
+          <div class="tone-toolbar">
+            <span class="tone-label">Tone:</span>
+            <div class="tone-buttons">
+              <button class="tone-btn active" data-tone="Formal" onclick="handleToneClick('Formal')">Formal</button>
+              <button class="tone-btn" data-tone="Friendly" onclick="handleToneClick('Friendly')">Friendly</button>
+              <button class="tone-btn" data-tone="Empathetic" onclick="handleToneClick('Empathetic')">Empathetic</button>
+              <button class="tone-btn" data-tone="Concise" onclick="handleToneClick('Concise')">Concise</button>
+              <button class="tone-btn" data-tone="Urgent" onclick="handleToneClick('Urgent')">Urgent</button>
+            </div>
+            <span id="tone-spinner" class="spinner-inline hidden"></span>
+          </div>
+
+          <!-- Reply Output Area -->
+          <div class="reply-wrapper">
+            <textarea id="reply-output" class="glass-textarea reply-box" rows="9" placeholder="The grounded AI reply generated by Ollama with retrieved historical context will appear here..."></textarea>
+          </div>
+
+          <div class="reply-footer">
+            <div class="latency-info" id="reply-latency">Latency: --s</div>
+            <button id="save-reply-btn" class="glass-btn btn-success" onclick="saveCurrentReply()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Reply Locally
+            </button>
+          </div>
+        </section>
+
+        <!-- Conversation Summary & Action Items -->
+        <section class="glass-panel" id="summary-section">
+          <div class="card-header">
+            <div class="header-icon-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <h2>Conversation Summary & Action Items</h2>
+            </div>
+            <div class="sentiment-chips" id="sentiment-chips">
+              <span class="badge badge-outline" id="sentiment-badge">Sentiment: --</span>
+              <span class="badge badge-outline" id="urgency-badge">Urgency: --</span>
+            </div>
+          </div>
+          <div class="summary-body" id="summary-body">
+            <p id="summary-text" class="summary-paragraph">Summary will be extracted from customer communication and support resolution.</p>
+            <div class="action-items-wrap">
+              <h4>Required Follow-up Actions:</h4>
+              <ul id="action-items-list" class="action-list">
+                <li>Awaiting ticket analysis</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Archive Modal -->
+  <div id="archive-modal" class="modal-backdrop hidden">
+    <div class="glass-panel modal-card">
+      <div class="modal-header">
+        <h2>Local Saved Replies Archive (<code>data/saved_replies.json</code>)</h2>
+        <button class="modal-close-btn" onclick="closeArchiveModal()">&times;</button>
+      </div>
+      <div class="modal-content" id="archive-modal-content">
+        <p>Loading saved replies...</p>
+      </div>
+      <div class="modal-footer">
+        <button class="glass-btn btn-secondary" onclick="exportArchiveJSON()">Export JSON</button>
+        <button class="glass-btn btn-secondary" onclick="closeArchiveModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lab Info Modal -->
+  <div id="lab-modal" class="modal-backdrop hidden">
+    <div class="glass-panel modal-card">
+      <div class="modal-header">
+        <h2>College Lab Experiment 3 Manual & Specifications</h2>
+        <button class="modal-close-btn" onclick="closeLabInfoModal()">&times;</button>
+      </div>
+      <div class="modal-content lab-specs">
+        <h3>1. Experiment Aim</h3>
+        <p>To design, develop, and evaluate an intelligent, offline-capable customer support email assistant leveraging open-weight LLMs (Ollama llama3.2) and dense sentence embeddings (Sentence Transformers) for semantic historical precedent retrieval.</p>
+        
+        <h3>2. Architecture Flow</h3>
+        <ol>
+          <li><strong>Input Capture:</strong> Parse Customer Name, Email, Subject, and Body using Pandas/Flask.</li>
+          <li><strong>Intent Recognition:</strong> Zero-shot classification into business intent categories.</li>
+          <li><strong>Dense Retrieval:</strong> Compute 384-dimensional dense vectors with <code>all-MiniLM-L6-v2</code>; rank historical tickets by Cosine Similarity.</li>
+          <li><strong>Contextual Generation:</strong> Feed retrieved similar historical resolution into <code>llama3.2</code> prompt template.</li>
+          <li><strong>Controllable Tone Rewrite:</strong> Zero-shot rewrite engine across Formal, Friendly, Empathetic, Concise, and Urgent styles.</li>
+          <li><strong>Local Persistence:</strong> Atomic append to <code>data/saved_replies.json</code>.</li>
+        </ol>
+
+        <h3>3. Execution Commands</h3>
+        <pre class="font-mono code-block">ollama pull llama3.2
+pip install -r requirements.txt
+python app.py</pre>
+      </div>
+      <div class="modal-footer">
+        <button class="glass-btn btn-primary" onclick="closeLabInfoModal()">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

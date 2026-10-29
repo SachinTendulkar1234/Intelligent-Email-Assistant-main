@@ -1,0 +1,16 @@
+[
+  {
+    "id": "rep-2026-001",
+    "timestamp": "2026-09-08T14:22:10Z",
+    "customer_name": "Marcus Vance",
+    "customer_email": "m.vance@techstudio.com",
+    "subject": "Charged twice after updating billing cycle",
+    "detected_intent": "Billing Inquiry",
+    "tone": "Formal",
+    "summary": "Customer Marcus Vance reported duplicate billing ($79 x 2) after changing from monthly to annual prorated plan. Historical precedent verified refund turnaround.",
+    "similar_email_id": 1,
+    "similarity_score": 0.884,
+    "generated_reply": "Dear Marcus,\n\nThank you for contacting our support team. We sincerely apologize for the inconvenience caused by the duplicate charge on your account following your billing cycle update.\n\nOur finance department has verified the duplicate transaction and processed an immediate refund of $79.00 to your original payment method. Depending on your financial institution, this credit will reflect in your account within 3 to 5 business days.\n\nPlease let us know if we can assist you with anything further.\n\nSincerely,\nCustomer Support Operations",
+    "model_used": "llama3.2:latest"
+  }
+]

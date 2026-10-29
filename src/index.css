@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-dark: #0e0205;
+    --burgundy-deep: #2a050f;
+    --burgundy-card: rgba(46, 7, 17, 0.55);
+    --burgundy-glass-border: rgba(244, 63, 94, 0.18);
+  }
+
+  body {
+    background-color: #0c0205;
+    color: #fff1f2;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+/* Glassy Burgundy Theme Utilities */
+.glass-burgundy {
+  background: rgba(46, 7, 17, 0.62);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  box-shadow: 0 16px 40px -12px rgba(14, 2, 5, 0.8), inset 0 1px 1px 0 rgba(255, 228, 230, 0.08);
+}
+
+.glass-burgundy:hover {
+  border-color: rgba(244, 63, 94, 0.35);
+}
+
+.glass-card-subtle {
+  background: rgba(24, 3, 9, 0.72);
+  border: 1px solid rgba(244, 63, 94, 0.15);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(20, 2, 6, 0.7);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(225, 29, 72, 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(225, 29, 72, 0.5);
+}

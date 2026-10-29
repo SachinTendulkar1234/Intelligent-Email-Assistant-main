@@ -1,0 +1,6 @@
+{
+  "name": "Intelligent Email Assistant using Ollama - Experiment 3",
+  "description": "College lab project for Experiment 3: Local Intelligent Email Assistant featuring intent detection, Sentence Transformers semantic retrieval, and Ollama llama3.2 reply generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
